@@ -122,7 +122,11 @@
                     <div class="card-header">Camera Feed</div>
                     <div class="card-body p-0">
                         <div class="video-container">
-                            <video id="webcam" autoplay playsinline width="100%"></video>
+                            <video id="webcam" autoplay playsinline width="100%">
+                                <div class="text-center py-2">
+                                    <button class="btn btn-danger" onclick="stopMonitoring()">Stop Monitoring</button>
+                                </div>
+                            </video>
                             <canvas id="canvas" style="display: none;"></canvas>
                         </div>
                     </div>
@@ -319,6 +323,23 @@
         setInterval(fetchGlucoseData, 1000);  // Check glucose every second
         setInterval(updateChart, 5000);       // Update chart every 5 seconds
     </script>
+    <script>
+        let monitoringInterval = setInterval(captureFrameAndSend, 2000);  // start monitoring
+        
+        function stopMonitoring() {
+            clearInterval(monitoringInterval);  // stop interval
+            updateStatus(false);  // update status light
+        
+            // Optional: stop webcam
+            if (video.srcObject) {
+                video.srcObject.getTracks().forEach(track => track.stop());
+                video.srcObject = null;
+            }
+        
+            alert("Monitoring stopped.");
+        }
+        </script>
+        
     <script>
         const video = document.getElementById('webcam');
         const canvas = document.getElementById('canvas');
