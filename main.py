@@ -2,6 +2,7 @@ from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
+from fastapi import Form
 import cv2
 import numpy as np
 from estimator import ImprovedGlucoseEstimator
@@ -81,7 +82,13 @@ async def submit_real_glucose(request: Request, real_glucose: float = Form(...))
         f.write(f"{datetime.now().isoformat()} - Real Glucose: {real_glucose}\n")
     return templates.TemplateResponse("index.html", {"request": request})
 
-
+@app.post("/submit_real_glucose")
+async def submit_real_glucose(request: Request, real_glucose: float = Form(...)):
+    print(f"Real Glucose submitted: {real_glucose}")
+    # Save to file (optional)
+    with open("real_glucose_log.txt", "a") as f:
+        f.write(f"{datetime.now().isoformat()} - Real Glucose: {real_glucose}\n")
+    return templates.TemplateResponse("index.html", {"request": request})
 
     if glucose is None:
         return JSONResponse(content={"status": "collecting", "collected": len(estimator.feature_buffer)}, status_code=202)
