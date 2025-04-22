@@ -11,7 +11,10 @@ import base64
 from io import BytesIO
 from PIL import Image
 from datetime import datetime
+from database import SessionLocal, engine
+from models import Base, GlucoseRecord
 
+Base.metadata.create_all(bind=engine)
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
 estimator = ImprovedGlucoseEstimator()
@@ -89,6 +92,29 @@ async def submit_real_glucose(request: Request, real_glucose: float = Form(...))
     with open("real_glucose_log.txt", "a") as f:
         f.write(f"{datetime.now().isoformat()} - Real Glucose: {real_glucose}\n")
     return templates.TemplateResponse("index.html", {"request": request})
+@app.post("/submit_real_glucose")
+async def submit_real_glucose(request: Request, real_glucose: float = Form(...)):
+    # Calculate average from estimator
+    if estimator.glucose_values:
+        estimated_avg = sum(estimator.glucose_values) / len(estimator.glucose_values)
+    else:
+        estimated_avg = 0.0
+
+    db = SessionLocal()
+    record = GlucoseRecord(real_glucose=real_glucose, estimated_avg=estimated_avg)
+    db.add(record)
+    db.commit()
+    db.close()
+
+    return templates.TemplateResponse("index.html", {"request": request})
+
+@app.get("/records")
+def get_records():
+    db = SessionLocal()
+    records = db.query(GlucoseRecord).all()
+    db.close()
+    return {"records": [{"real": r.real_glucose, "estimated_avg": r.estimated_avg, "timestamp": r.timestamp} for r in records]}
+
 
     if glucose is None:
         return JSONResponse(content={"status": "collecting", "collected": len(estimator.feature_buffer)}, status_code=202)
