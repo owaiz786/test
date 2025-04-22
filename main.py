@@ -81,15 +81,6 @@ async def submit_real_glucose(request: Request, real_glucose: float = Form(...))
         f.write(f"{datetime.now().isoformat()} - Real Glucose: {real_glucose}\n")
     return templates.TemplateResponse("index.html", {"request": request})
 
-from fastapi import Form
-
-@app.post("/submit_real_glucose")
-async def submit_real_glucose(request: Request, real_glucose: float = Form(...)):
-    print(f"Real Glucose submitted: {real_glucose}")
-    # Save to file (optional)
-    with open("real_glucose_log.txt", "a") as f:
-        f.write(f"{datetime.now().isoformat()} - Real Glucose: {real_glucose}\n")
-    return templates.TemplateResponse("index.html", {"request": request})
 
 
     if glucose is None:
