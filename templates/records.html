@@ -156,58 +156,60 @@
     }
     
     // Function to create comparison chart
-    function createComparisonChart(labels, realValues, estimatedValues) {
-        const ctx = document.getElementById('comparisonChart').getContext('2d');
-        
-        // Destroy existing chart if it exists
-        if (window.comparisonChart) {
-            window.comparisonChart.destroy();
-        }
-        
-        window.comparisonChart = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: labels,
-                datasets: [
-                    {
-                        label: 'Real Glucose',
-                        data: realValues,
-                        borderColor: 'rgb(75, 192, 192)',
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        tension: 0.1,
-                        borderWidth: 2
-                    },
-                    {
-                        label: 'Estimated Glucose',
-                        data: estimatedValues,
-                        borderColor: 'rgb(255, 99, 132)',
-                        backgroundColor: 'rgba(255, 99, 132, 0.2)',
-                        tension: 0.1,
-                        borderWidth: 2
+    // Function to create comparison chart
+function createComparisonChart(labels, realValues, estimatedValues) {
+    const ctx = document.getElementById('comparisonChart').getContext('2d');
+    
+    // Destroy existing chart if it exists
+    if (window.comparisonChart && typeof window.comparisonChart.destroy === 'function') {
+        window.comparisonChart.destroy();
+    }
+    
+    window.comparisonChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Real Glucose',
+                    data: realValues,
+                    borderColor: 'rgb(75, 192, 192)',
+                    backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                    tension: 0.1,
+                    borderWidth: 2
+                },
+                {
+                    label: 'Estimated Glucose',
+                    data: estimatedValues,
+                    borderColor: 'rgb(255, 99, 132)',
+                    backgroundColor: 'rgba(255, 99, 132, 0.2)',
+                    tension: 0.1,
+                    borderWidth: 2
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: false,
+                    title: {
+                        display: true,
+                        text: 'Glucose (mg/dL)'
                     }
-                ]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: {
-                        beginAtZero: false,
-                        title: {
-                            display: true,
-                            text: 'Glucose (mg/dL)'
-                        }
-                    },
-                    x: {
-                        ticks: {
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
+                },
+                x: {
+                    ticks: {
+                        maxRotation: 45,
+                        minRotation: 45
                     }
                 }
             }
-        });
-    }
+        }
+    });
+}
+    
     
     // Load records when page loads
     window.onload = loadRecords;
