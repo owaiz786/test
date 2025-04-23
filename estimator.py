@@ -260,46 +260,50 @@ class ImprovedGlucoseEstimator:
         
         return glucose
     
-    def process_frame(self, frame):
-        """Process a single video frame"""
-        # Detect eyes
-        eye_coords = self.detect_eyes(frame)
-        
-        # Extract features
-        feature_vector = self.extract_eye_features(frame, eye_coords)
-        
-        # Add to feature buffer
-        self.feature_buffer.append(feature_vector)
-        
-        # Make prediction if we have enough data
-        if len(self.feature_buffer) == self.sequence_length:
-            glucose = self.predict_glucose(list(self.feature_buffer))
-            self.history_buffer.append(glucose)
-            
-            # Store for plotting
-            current_time = time.time() - self.start_time
-            self.glucose_values.append(glucose)
-            self.time_values.append(current_time)
-            
-            # Determine text color based on glucose level
-            if glucose < 70:
-                color = (0, 0, 255)  # Red for low
-            elif glucose > 140:
-                color = (0, 165, 255)  # Orange for high
-            else:
-                color = (0, 255, 0)  # Green for normal
-            
-            # Add glucose reading to frame
-            cv2.putText(frame, f"Glucose: {glucose:.1f} mg/dL", 
-                       (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
-            
-            return frame, glucose
-        else:
-            # Not enough frames yet
-            cv2.putText(frame, f"Collecting data: {len(self.feature_buffer)}/{self.sequence_length}", 
-                       (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
-            return frame, None
+ def process_frame(self, frame):
+    """Process a single video frame"""
+    # Detect eyes
+    eye_coords = self.detect_eyes(frame)
     
+    # Extract features
+    feature_vector = self.extract_eye_features(frame, eye_coords)
+    
+    # Add to feature buffer
+    self.feature_buffer.append(feature_vector)
+    
+    # Make prediction if we have enough data
+    if len(self.feature_buffer) == self.sequence_length:
+        glucose = self.predict_glucose(list(self.feature_buffer))
+        
+        # Convert NumPy value to standard Python float if needed
+        if hasattr(glucose, 'item'):  # Check if it's a NumPy type
+            glucose = float(glucose)
+            
+        self.history_buffer.append(glucose)
+        
+        # Store for plotting
+        current_time = time.time() - self.start_time
+        self.glucose_values.append(glucose)
+        self.time_values.append(current_time)
+        
+        # Determine text color based on glucose level
+        if glucose < 70:
+            color = (0, 0, 255)  # Red for low
+        elif glucose > 140:
+            color = (0, 165, 255)  # Orange for high
+        else:
+            color = (0, 255, 0)  # Green for normal
+        
+        # Add glucose reading to frame
+        cv2.putText(frame, f"Glucose: {glucose:.1f} mg/dL", 
+                   (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, color, 2)
+        
+        return frame, glucose
+    else:
+        # Not enough frames yet
+        cv2.putText(frame, f"Collecting data: {len(self.feature_buffer)}/{self.sequence_length}", 
+                   (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+        return frame, None
     def run(self, video_source=0):
         """Run real-time glucose estimation simulation"""
         cap = cv2.VideoCapture(video_source)

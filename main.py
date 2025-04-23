@@ -86,10 +86,10 @@ async def predict(file: UploadFile = File(...)):
 @app.post("/submit_real_glucose")
 async def submit_real_glucose(request: Request, real_glucose: float = Form(...)):
     # Calculate average from estimator
+    estimated_avg = 0.0
     if estimator.glucose_values:
-        estimated_avg = sum(estimator.glucose_values) / len(estimator.glucose_values)
-    else:
-        estimated_avg = 0.0
+        # Convert numpy.float64 to regular Python float
+        estimated_avg = float(sum(estimator.glucose_values) / len(estimator.glucose_values))
 
     # Save to database
     db = SessionLocal()
@@ -113,10 +113,10 @@ def get_records():
 @app.post("/stop_monitoring")
 async def stop_monitoring(request: Request, real_glucose: float = Form(...)):
     # Calculate average glucose from the estimator
+    estimated_avg = 0.0
     if estimator.glucose_values:
-        estimated_avg = sum(estimator.glucose_values) / len(estimator.glucose_values)
-    else:
-        estimated_avg = 0.0
+        # Convert numpy.float64 to regular Python float
+        estimated_avg = float(sum(estimator.glucose_values) / len(estimator.glucose_values))
 
     # Save the record to the database
     db = SessionLocal()
