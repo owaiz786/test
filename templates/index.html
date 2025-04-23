@@ -202,7 +202,7 @@
             text.innerText = 'System Active';
         } else {
             indicator.classList.replace('status-active', 'status-inactive');
-            text.innerText = 'Waiting for data...';
+            text.innerText = 'System Inactive';
         }
     }
 
@@ -228,13 +228,10 @@
             .then(res => res.json())
             .then(data => {
                 if (data.glucose > 0) {
-                    updateStatus(true);
                     updateGlucoseDisplay(data.glucose);
-                } else {
-                    updateStatus(false);
                 }
             })
-            .catch(() => updateStatus(false));
+            .catch(error => console.error('Error fetching glucose data:', error));
     }
 
     function updateChart() {
@@ -244,27 +241,66 @@
                 glucoseChart.data.labels = data.times.map(t => t.toFixed(0) + 's');
                 glucoseChart.data.datasets[0].data = data.values;
                 glucoseChart.update();
-            });
+            })
+            .catch(error => console.error('Error updating chart:', error));
     }
 
     const video = document.getElementById('webcam');
     const canvas = document.getElementById('canvas');
     const context = canvas.getContext('2d');
     let monitoringInterval = null;
+    let dataPollingInterval = null;
+    let chartUpdateInterval = null;
 
     function startMonitoring() {
-        if (monitoringInterval) return;
+        if (monitoringInterval) return; // Already monitoring
+        
         navigator.mediaDevices.getUserMedia({ video: true })
             .then(stream => {
                 video.srcObject = stream;
                 video.play();
                 updateStatus(true);
+                
+                // Start capturing frames
                 monitoringInterval = setInterval(captureFrameAndSend, 2000);
+                
+                // Start data polling
+                dataPollingInterval = setInterval(fetchGlucoseData, 1000);
+                chartUpdateInterval = setInterval(updateChart, 5000);
+                
+                console.log("Monitoring started");
             })
             .catch(err => {
                 console.error("Camera error:", err);
                 updateStatus(false);
             });
+    }
+
+    function stopMonitoring() {
+        // Clear all intervals
+        if (monitoringInterval) {
+            clearInterval(monitoringInterval);
+            monitoringInterval = null;
+        }
+        
+        if (dataPollingInterval) {
+            clearInterval(dataPollingInterval);
+            dataPollingInterval = null;
+        }
+        
+        if (chartUpdateInterval) {
+            clearInterval(chartUpdateInterval);
+            chartUpdateInterval = null;
+        }
+        
+        // Stop camera
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
+        
+        updateStatus(false);
+        console.log("Monitoring stopped");
     }
 
     function captureFrameAndSend() {
@@ -284,24 +320,20 @@
                         glucoseChart.data.datasets[0].data.push(data.glucose);
                         glucoseChart.update();
                     }
-                });
+                })
+                .catch(error => console.error('Error sending frame:', error));
         }, 'image/jpeg');
     }
 
     document.getElementById('stopForm').addEventListener('submit', function(e) {
-        clearInterval(monitoringInterval);
-        monitoringInterval = null;
-        updateStatus(false);
-        if (video.srcObject) {
-            video.srcObject.getTracks().forEach(track => track.stop());
-            video.srcObject = null;
-        }
+        stopMonitoring();
+        // Form submission continues normally
     });
 
+    // Initialize but don't start monitoring automatically
     window.onload = () => {
-        startMonitoring();
-        setInterval(fetchGlucoseData, 1000);
-        setInterval(updateChart, 5000);
+        updateStatus(false);
+        // We don't start monitoring automatically - user must click the button
     };
 </script>
 </body>
