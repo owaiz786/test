@@ -136,8 +136,9 @@ async def stop_monitoring(request: Request, real_glucose: float = Form(...)):
 @app.get("/glucose/all")
 def get_all_data(db: Session = Depends(get_db)):
     records = db.query(GlucoseRecord).all()
-    return {"records": [{"id": r.id, "real_glucose": r.real_glucose, 
-                         "estimated_avg": r.estimated_avg, 
+    return {"records": [{"id": r.id, 
+                         "real_glucose": float(r.real_glucose),  # Convert to Python float
+                         "estimated_avg": float(r.estimated_avg),  # Convert to Python float
                          "timestamp": r.timestamp} for r in records]}
 
 @app.get("/records_page", response_class=HTMLResponse)

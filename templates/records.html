@@ -91,8 +91,15 @@
     // Function to fetch and display records
     function loadRecords() {
         fetch('/glucose/all')
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok: ' + response.statusText);
+                }
+                return response.json();
+            })
             .then(data => {
+                console.log("Received data:", data); // Debug: log the data
+                
                 const tableBody = document.getElementById('recordsTable');
                 tableBody.innerHTML = '';
                 
@@ -114,24 +121,28 @@
                     const recordDate = new Date(record.timestamp);
                     const formattedDate = recordDate.toLocaleString();
                     
+                    // Make sure we're working with JavaScript numbers, not string or NumPy values
+                    const realGlucose = parseFloat(record.real_glucose);
+                    const estimatedAvg = parseFloat(record.estimated_avg);
+                    
                     // Calculate difference
-                    const difference = (record.real_glucose - record.estimated_avg).toFixed(1);
-                    const differenceClass = Math.abs(difference) > 15 ? 'text-danger' : 'text-success';
+                    const difference = (realGlucose - estimatedAvg).toFixed(1);
+                    const differenceClass = Math.abs(parseFloat(difference)) > 15 ? 'text-danger' : 'text-success';
                     
                     // Add table row
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${formattedDate}</td>
-                        <td>${record.real_glucose.toFixed(1)}</td>
-                        <td>${record.estimated_avg.toFixed(1)}</td>
+                        <td>${realGlucose.toFixed(1)}</td>
+                        <td>${estimatedAvg.toFixed(1)}</td>
                         <td class="${differenceClass}">${difference}</td>
                     `;
                     tableBody.appendChild(row);
                     
                     // Add data for chart (reverse order for chart display)
                     chartLabels.unshift(formattedDate.split(',')[0]);
-                    realValues.unshift(record.real_glucose);
-                    estimatedValues.unshift(record.estimated_avg);
+                    realValues.unshift(realGlucose);
+                    estimatedValues.unshift(estimatedAvg);
                 });
                 
                 // Create chart
@@ -140,7 +151,7 @@
             .catch(error => {
                 console.error('Error fetching records:', error);
                 document.getElementById('recordsTable').innerHTML = 
-                    '<tr><td colspan="4" class="text-center text-danger">Error loading records</td></tr>';
+                    '<tr><td colspan="4" class="text-center text-danger">Error loading records: ' + error.message + '</td></tr>';
             });
     }
     
