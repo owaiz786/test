@@ -130,7 +130,6 @@ async def stop_monitoring(request: Request, real_glucose: float = Form(...)):
     # Return a response that renders the index page with a success message
     return templates.TemplateResponse("index.html", {"request": request, "message": "Monitoring stopped and data saved."})
 
-app = FastAPI()
 
 @app.get("/glucose/all")
 def get_all_data(db: Session = Depends(get_db)):
