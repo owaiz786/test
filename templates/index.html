@@ -7,25 +7,68 @@
     <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f0f4f8; color: #333; padding-top: 20px; }
-        .card { border-radius: 10px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); margin-bottom: 20px; overflow: hidden; }
-        .card-header { background-color: #2c3e50; color: white; font-weight: 600; }
-        .glucose-value { font-size: 3rem; font-weight: 700; text-align: center; padding: 20px 0; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f4f8;
+            color: #333;
+            padding-top: 20px;
+        }
+        .card {
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        .card-header {
+            background-color: #2c3e50;
+            color: white;
+            font-weight: 600;
+        }
+        .glucose-value {
+            font-size: 3rem;
+            font-weight: 700;
+            text-align: center;
+            padding: 20px 0;
+        }
         .glucose-normal { color: #28a745; }
         .glucose-warning { color: #fd7e14; }
         .glucose-danger { color: #dc3545; }
-        .status-indicator { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 5px; }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
         .status-active { background-color: #28a745; animation: pulse 2s infinite; }
         .status-inactive { background-color: #dc3545; }
-        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
-        .video-container video { width: 100%; height: auto; }
-        .eye-tracking-display { width: 100%; height: 150px; background-color: #000; border-radius: 5px; overflow: hidden; }
-        .instructions { background-color: #e9ecef; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
-        .chart-container { position: relative; height: 300px; width: 100%; }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .video-container video {
+            width: 100%;
+            height: auto;
+        }
+        .eye-tracking-display {
+            width: 100%;
+            height: 150px;
+            background-color: #000;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        .chart-container {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
     </style>
 </head>
 <body>
 <div class="container">
+    <!-- Header -->
     <div class="row mb-4">
         <div class="col-12">
             <div class="card">
@@ -34,6 +77,9 @@
                 </div>
                 <div class="card-body text-center">
                     <p class="lead">Using computer vision and AI for non-invasive glucose estimation</p>
+                    {% if message %}
+                        <div class="alert alert-success mt-3" role="alert">{{ message }}</div>
+                    {% endif %}
                     <div id="status">
                         <span class="status-indicator status-inactive" id="statusIndicator"></span>
                         <span id="statusText">Initializing...</span>
@@ -43,27 +89,31 @@
         </div>
     </div>
 
+    <!-- Main Content -->
     <div class="row">
+        <!-- Left Panel -->
         <div class="col-md-8">
+            <!-- Camera Feed -->
             <div class="card">
                 <div class="card-header">Camera Feed</div>
                 <div class="card-body p-0">
                     <div class="video-container">
                         <video id="webcam" autoplay playsinline></video>
-                        <canvas id="canvas" style="display:none"></canvas>
-                        <div class="text-center p-3">
-                            <button class="btn btn-success me-2" onclick="startMonitoring()">Start Monitoring</button>
-                        </div>
-                        <form id="stopForm" method="POST" action="/stop_monitoring" class="d-flex flex-column align-items-center p-3">
-                            <div class="mb-2 w-75">
-                                <input type="number" step="0.1" class="form-control" name="real_glucose" id="real_glucose_input" placeholder="Enter Real Glucose" required>
-                            </div>
-                            <button type="submit" class="btn btn-danger">Stop Monitoring & Save</button>
-                        </form>
+                        <canvas id="canvas" style="display:none;"></canvas>
                     </div>
+                    <div class="text-center p-3">
+                        <button class="btn btn-success me-2" onclick="startMonitoring()">Start Monitoring</button>
+                    </div>
+                    <form id="stopForm" method="POST" action="/stop_monitoring" class="d-flex flex-column align-items-center p-3">
+                        <div class="mb-2 w-75">
+                            <input type="number" step="0.1" class="form-control" name="real_glucose" id="real_glucose_input" placeholder="Enter Real Glucose" required>
+                        </div>
+                        <button type="submit" class="btn btn-danger">Stop Monitoring & Save</button>
+                    </form>
                 </div>
             </div>
 
+            <!-- Glucose Chart -->
             <div class="card">
                 <div class="card-header">Glucose Trend</div>
                 <div class="card-body">
@@ -74,7 +124,9 @@
             </div>
         </div>
 
+        <!-- Right Panel -->
         <div class="col-md-4">
+            <!-- Current Glucose -->
             <div class="card">
                 <div class="card-header">Current Glucose Level</div>
                 <div class="card-body p-0">
@@ -85,6 +137,7 @@
                 </div>
             </div>
 
+            <!-- Eye Tracking -->
             <div class="card">
                 <div class="card-header">Eye Tracking</div>
                 <div class="card-body p-0">
@@ -94,18 +147,18 @@
                 </div>
             </div>
 
+            <!-- Instructions -->
             <div class="card">
                 <div class="card-header">Instructions</div>
                 <div class="card-body">
                     <ul>
-                        <li>Make sure your face is well-lit</li>
+                        <li>Ensure good lighting on your face</li>
                         <li>Look directly at the camera</li>
-                        <li>Keep your eyes open</li>
-                        <li>Stay still during measurement</li>
-                        <li>Wait for data collection (20 frames)</li>
+                        <li>Keep eyes open and face still</li>
+                        <li>Wait for 20 frames of data</li>
                     </ul>
                     <div class="alert alert-info mt-3">
-                        <small>This is a simulation for demonstration purposes. Real glucose monitoring would require medical-grade calibration and validation.</small>
+                        <small>This is a simulated system. Real glucose monitoring requires certified medical calibration.</small>
                     </div>
                 </div>
             </div>
@@ -113,135 +166,142 @@
     </div>
 </div>
 
+<!-- JavaScript -->
 <script>
-const ctx = document.getElementById('glucoseChart').getContext('2d');
-const glucoseChart = new Chart(ctx, {
-    type: 'line',
-    data: { labels: [], datasets: [{ label: 'Glucose Level (mg/dL)', data: [], borderColor: 'rgb(75, 192, 192)', tension: 0.2, borderWidth: 2, fill: false }] },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        scales: {
-            y: { min: 70, max: 180 },
-            x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } }
+    const ctx = document.getElementById('glucoseChart').getContext('2d');
+    const glucoseChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: [],
+            datasets: [{
+                label: 'Glucose Level (mg/dL)',
+                data: [],
+                borderColor: 'rgb(75, 192, 192)',
+                tension: 0.2,
+                borderWidth: 2,
+                fill: false
+            }]
         },
-        plugins: { legend: { display: false } }
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: { min: 70, max: 180 },
+                x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10 } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    function updateStatus(active) {
+        const indicator = document.getElementById('statusIndicator');
+        const text = document.getElementById('statusText');
+        if (active) {
+            indicator.classList.replace('status-inactive', 'status-active');
+            text.innerText = 'System Active';
+        } else {
+            indicator.classList.replace('status-active', 'status-inactive');
+            text.innerText = 'Waiting for data...';
+        }
     }
-});
 
-function updateStatus(active) {
-    const indicator = document.getElementById('statusIndicator');
-    const text = document.getElementById('statusText');
-    if (active) {
-        indicator.classList.remove('status-inactive');
-        indicator.classList.add('status-active');
-        text.innerText = 'System Active';
-    } else {
-        indicator.classList.remove('status-active');
-        indicator.classList.add('status-inactive');
-        text.innerText = 'Waiting for data...';
+    function updateGlucoseDisplay(value) {
+        const display = document.getElementById('glucoseValue');
+        const status = document.getElementById('glucoseStatus');
+        display.innerText = value.toFixed(1) + ' mg/dL';
+        display.className = 'glucose-value';
+        if (value < 70) {
+            display.classList.add('glucose-danger');
+            status.innerText = 'Low glucose level';
+        } else if (value > 140) {
+            display.classList.add('glucose-warning');
+            status.innerText = 'High glucose level';
+        } else {
+            display.classList.add('glucose-normal');
+            status.innerText = 'Normal glucose level';
+        }
     }
-}
 
-function updateGlucoseDisplay(value) {
-    const display = document.getElementById('glucoseValue');
-    const status = document.getElementById('glucoseStatus');
-    display.innerText = value.toFixed(1) + ' mg/dL';
-    display.classList.remove('glucose-normal', 'glucose-warning', 'glucose-danger');
-    if (value < 70) {
-        display.classList.add('glucose-danger');
-        status.innerText = 'Low glucose level';
-    } else if (value > 140) {
-        display.classList.add('glucose-warning');
-        status.innerText = 'High glucose level';
-    } else {
-        display.classList.add('glucose-normal');
-        status.innerText = 'Normal glucose level';
+    function fetchGlucoseData() {
+        fetch('/glucose_data')
+            .then(res => res.json())
+            .then(data => {
+                if (data.glucose > 0) {
+                    updateStatus(true);
+                    updateGlucoseDisplay(data.glucose);
+                } else {
+                    updateStatus(false);
+                }
+            })
+            .catch(() => updateStatus(false));
     }
-}
 
-function fetchGlucoseData() {
-    fetch('/glucose_data')
-        .then(res => res.json())
-        .then(data => {
-            if (data.glucose > 0) {
-                updateStatus(true);
-                updateGlucoseDisplay(data.glucose);
-            } else {
-                updateStatus(false);
-            }
-        })
-        .catch(() => updateStatus(false));
-}
-
-function updateChart() {
-    fetch('/glucose_chart')
-        .then(res => res.json())
-        .then(data => {
-            if (data.times.length > 0) {
+    function updateChart() {
+        fetch('/glucose_chart')
+            .then(res => res.json())
+            .then(data => {
                 glucoseChart.data.labels = data.times.map(t => t.toFixed(0) + 's');
                 glucoseChart.data.datasets[0].data = data.values;
                 glucoseChart.update();
-            }
-        });
-}
-
-const video = document.getElementById('webcam');
-const canvas = document.getElementById('canvas');
-const context = canvas.getContext('2d');
-let monitoringInterval = null;
-
-function startMonitoring() {
-    if (monitoringInterval) return;
-    navigator.mediaDevices.getUserMedia({ video: true })
-        .then(stream => {
-            video.srcObject = stream;
-            video.play();
-            updateStatus(true);
-            monitoringInterval = setInterval(captureFrameAndSend, 2000);
-        })
-        .catch(err => {
-            console.error("Camera error:", err);
-            updateStatus(false);
-        });
-}
-
-function captureFrameAndSend() {
-    if (!video.videoWidth || !video.videoHeight) return;
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    context.drawImage(video, 0, 0);
-    canvas.toBlob(blob => {
-        const formData = new FormData();
-        formData.append('file', blob, 'frame.jpg');
-        fetch('/predict/', { method: 'POST', body: formData })
-            .then(res => res.json())
-            .then(data => {
-                if (data.glucose) {
-                    updateGlucoseDisplay(data.glucose);
-                    glucoseChart.data.labels.push(new Date().toLocaleTimeString());
-                    glucoseChart.data.datasets[0].data.push(data.glucose);
-                    glucoseChart.update();
-                }
             });
-    }, 'image/jpeg');
-}
-
-document.getElementById('stopForm').addEventListener('submit', function(e) {
-    clearInterval(monitoringInterval);
-    monitoringInterval = null;
-    updateStatus(false);
-    if (video.srcObject) {
-        video.srcObject.getTracks().forEach(track => track.stop());
-        video.srcObject = null;
     }
-});
 
-window.onload = () => {
-    startMonitoring();
-    setInterval(fetchGlucoseData, 1000);
-    setInterval(updateChart, 5000);
-};
+    const video = document.getElementById('webcam');
+    const canvas = document.getElementById('canvas');
+    const context = canvas.getContext('2d');
+    let monitoringInterval = null;
+
+    function startMonitoring() {
+        if (monitoringInterval) return;
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                video.play();
+                updateStatus(true);
+                monitoringInterval = setInterval(captureFrameAndSend, 2000);
+            })
+            .catch(err => {
+                console.error("Camera error:", err);
+                updateStatus(false);
+            });
+    }
+
+    function captureFrameAndSend() {
+        if (!video.videoWidth || !video.videoHeight) return;
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        context.drawImage(video, 0, 0);
+        canvas.toBlob(blob => {
+            const formData = new FormData();
+            formData.append('file', blob, 'frame.jpg');
+            fetch('/predict/', { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.glucose) {
+                        updateGlucoseDisplay(data.glucose);
+                        glucoseChart.data.labels.push(new Date().toLocaleTimeString());
+                        glucoseChart.data.datasets[0].data.push(data.glucose);
+                        glucoseChart.update();
+                    }
+                });
+        }, 'image/jpeg');
+    }
+
+    document.getElementById('stopForm').addEventListener('submit', function(e) {
+        clearInterval(monitoringInterval);
+        monitoringInterval = null;
+        updateStatus(false);
+        if (video.srcObject) {
+            video.srcObject.getTracks().forEach(track => track.stop());
+            video.srcObject = null;
+        }
+    });
+
+    window.onload = () => {
+        startMonitoring();
+        setInterval(fetchGlucoseData, 1000);
+        setInterval(updateChart, 5000);
+    };
 </script>
 </body>
 </html>

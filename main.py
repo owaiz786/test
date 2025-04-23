@@ -2,7 +2,6 @@ from fastapi import FastAPI, Request, Form, UploadFile, File
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
-from fastapi import Form
 import cv2
 import numpy as np
 from estimator import ImprovedGlucoseEstimator
@@ -13,9 +12,8 @@ from PIL import Image
 from datetime import datetime
 from database import SessionLocal, engine
 from models import Base, GlucoseRecord
-from fastapi import Request, Form
-from fastapi.responses import JSONResponse
 
+# Initialize FastAPI app
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
 templates = Jinja2Templates(directory="templates")
@@ -79,21 +77,7 @@ async def predict(file: UploadFile = File(...)):
 
     return {"glucose": glucose}
 
-# ✅ ADDED: Real glucose submission route
-@app.post("/submit_real_glucose")
-async def submit_real_glucose(request: Request, real_glucose: float = Form(...)):
-    print(f"Real Glucose submitted: {real_glucose}")
-    with open("real_glucose_log.txt", "a") as f:
-        f.write(f"{datetime.now().isoformat()} - Real Glucose: {real_glucose}\n")
-    return templates.TemplateResponse("index.html", {"request": request})
-
-@app.post("/submit_real_glucose")
-async def submit_real_glucose(request: Request, real_glucose: float = Form(...)):
-    print(f"Real Glucose submitted: {real_glucose}")
-    # Save to file (optional)
-    with open("real_glucose_log.txt", "a") as f:
-        f.write(f"{datetime.now().isoformat()} - Real Glucose: {real_glucose}\n")
-    return templates.TemplateResponse("index.html", {"request": request})
+# Real glucose submission route
 @app.post("/submit_real_glucose")
 async def submit_real_glucose(request: Request, real_glucose: float = Form(...)):
     # Calculate average from estimator
@@ -102,14 +86,17 @@ async def submit_real_glucose(request: Request, real_glucose: float = Form(...))
     else:
         estimated_avg = 0.0
 
+    # Save to database
     db = SessionLocal()
     record = GlucoseRecord(real_glucose=real_glucose, estimated_avg=estimated_avg)
     db.add(record)
     db.commit()
     db.close()
 
-    return templates.TemplateResponse("index.html", {"request": request})
+    # Render the success message on the index page
+    return templates.TemplateResponse("index.html", {"request": request, "message": "Real glucose data saved."})
 
+# Get all records from the database
 @app.get("/records")
 def get_records():
     db = SessionLocal()
@@ -117,29 +104,26 @@ def get_records():
     db.close()
     return {"records": [{"real": r.real_glucose, "estimated_avg": r.estimated_avg, "timestamp": r.timestamp} for r in records]}
 
+# Stop monitoring and save data
 @app.post("/stop_monitoring")
 async def stop_monitoring(request: Request, real_glucose: float = Form(...)):
+    # Calculate average glucose from the estimator
     if estimator.glucose_values:
         estimated_avg = sum(estimator.glucose_values) / len(estimator.glucose_values)
     else:
         estimated_avg = 0.0
 
+    # Save the record to the database
     db = SessionLocal()
     record = GlucoseRecord(real_glucose=real_glucose, estimated_avg=estimated_avg)
     db.add(record)
     db.commit()
     db.close()
 
-    # Clear for next session
+    # Clear the estimator buffers for the next session
     estimator.glucose_values.clear()
     estimator.time_values.clear()
 
-    return JSONResponse(content={"message": "Monitoring stopped and data saved."})
-
-    if glucose is None:
-        return JSONResponse(content={"status": "collecting", "collected": len(estimator.feature_buffer)}, status_code=202)
-
-    return {"glucose": glucose}
-
-
+    # Return a response that renders the index page with a success message
+    return templates.TemplateResponse("index.html", {"request": request, "message": "Monitoring stopped and data saved."})
 
