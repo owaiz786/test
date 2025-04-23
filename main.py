@@ -11,7 +11,8 @@ from io import BytesIO
 from PIL import Image
 from datetime import datetime
 from database import SessionLocal, engine
-from models import Base, GlucoseRecord
+from models import Base
+from models import GlucoseRecord
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from database import get_db
@@ -134,5 +135,5 @@ async def stop_monitoring(request: Request, real_glucose: float = Form(...)):
 
 @app.get("/glucose/all")
 def get_all_data(db: Session = Depends(get_db)):
-    return db.query(Glucose).all()
+    return db.query(GlucoseRecord).all()
 
