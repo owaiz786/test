@@ -12,6 +12,7 @@ from PIL import Image
 from datetime import datetime
 from database import SessionLocal, engine
 from models import Base, GlucoseRecord
+from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from database import get_db
 from models import Glucose
