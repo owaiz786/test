@@ -13,6 +13,8 @@ from PIL import Image
 from datetime import datetime
 from database import SessionLocal, engine
 from models import Base, GlucoseRecord
+from fastapi import Request, Form
+from fastapi.responses import JSONResponse
 
 Base.metadata.create_all(bind=engine)
 app = FastAPI()
@@ -115,6 +117,24 @@ def get_records():
     db.close()
     return {"records": [{"real": r.real_glucose, "estimated_avg": r.estimated_avg, "timestamp": r.timestamp} for r in records]}
 
+@app.post("/stop_monitoring")
+async def stop_monitoring(request: Request, real_glucose: float = Form(...)):
+    if estimator.glucose_values:
+        estimated_avg = sum(estimator.glucose_values) / len(estimator.glucose_values)
+    else:
+        estimated_avg = 0.0
+
+    db = SessionLocal()
+    record = GlucoseRecord(real_glucose=real_glucose, estimated_avg=estimated_avg)
+    db.add(record)
+    db.commit()
+    db.close()
+
+    # Clear for next session
+    estimator.glucose_values.clear()
+    estimator.time_values.clear()
+
+    return JSONResponse(content={"message": "Monitoring stopped and data saved."})
 
     if glucose is None:
         return JSONResponse(content={"status": "collecting", "collected": len(estimator.feature_buffer)}, status_code=202)
