@@ -12,6 +12,9 @@ from PIL import Image
 from datetime import datetime
 from database import SessionLocal, engine
 from models import Base, GlucoseRecord
+from sqlalchemy.orm import Session
+from database import get_db
+from models import Glucose
 
 # Initialize FastAPI app
 Base.metadata.create_all(bind=engine)
@@ -126,4 +129,10 @@ async def stop_monitoring(request: Request, real_glucose: float = Form(...)):
 
     # Return a response that renders the index page with a success message
     return templates.TemplateResponse("index.html", {"request": request, "message": "Monitoring stopped and data saved."})
+
+app = FastAPI()
+
+@app.get("/glucose/all")
+def get_all_data(db: Session = Depends(get_db)):
+    return db.query(Glucose).all()
 
