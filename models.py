@@ -8,6 +8,6 @@ class GlucoseRecord(Base):
     __tablename__ = "glucose_records"
 
     id = Column(Integer, primary_key=True, index=True)
-    real_glucose = Column(Float, nullable=False)
-    estimated_avg = Column(Float, nullable=False)
-    timestamp = Column(DateTime, default=datetime.utcnow)
+    real_glucose = Column(Float)
+    estimated_avg = Column(Float)
+    timestamp = Column(DateTime, default=datetime.now)

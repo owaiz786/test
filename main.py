@@ -11,12 +11,12 @@ from io import BytesIO
 from PIL import Image
 from datetime import datetime
 from database import SessionLocal, engine
-from models import Base
-from models import GlucoseRecord
+from models import Base, GlucoseRecord
+
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Glucose
+
 
 # Initialize FastAPI app
 Base.metadata.create_all(bind=engine)
@@ -135,5 +135,11 @@ async def stop_monitoring(request: Request, real_glucose: float = Form(...)):
 
 @app.get("/glucose/all")
 def get_all_data(db: Session = Depends(get_db)):
-    return db.query(GlucoseRecord).all()
+    records = db.query(GlucoseRecord).all()
+    return {"records": [{"id": r.id, "real_glucose": r.real_glucose, 
+                         "estimated_avg": r.estimated_avg, 
+                         "timestamp": r.timestamp} for r in records]}
 
+@app.get("/records_page", response_class=HTMLResponse)
+async def records_page(request: Request):
+    return templates.TemplateResponse("records.html", {"request": request})
