@@ -11,5 +11,3 @@ class GlucoseRecord(Base):
     real_glucose = Column(Float)
     estimated_avg = Column(Float)
     timestamp = Column(DateTime, default=datetime.now)
-    
-    

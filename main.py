@@ -16,12 +16,6 @@ from models import Base, GlucoseRecord
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from database import get_db
-import io
-import csv
-from fastapi import FastAPI
-from fastapi.responses import StreamingResponse
-from sqlalchemy.orm import Session
-from models import GlucoseRecord, SessionLocal
 
 
 # Initialize FastAPI app
@@ -150,4 +144,3 @@ def get_all_data(db: Session = Depends(get_db)):
 @app.get("/records_page", response_class=HTMLResponse)
 async def records_page(request: Request):
     return templates.TemplateResponse("records.html", {"request": request})
-
