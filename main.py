@@ -16,7 +16,10 @@ from models import Base, GlucoseRecord
 from fastapi import FastAPI, Depends
 from sqlalchemy.orm import Session
 from database import get_db
-
+from fastapi.responses import FileResponse
+import pandas as pd
+import io
+import csv
 
 # Initialize FastAPI app
 Base.metadata.create_all(bind=engine)
@@ -144,3 +147,50 @@ def get_all_data(db: Session = Depends(get_db)):
 @app.get("/records_page", response_class=HTMLResponse)
 async def records_page(request: Request):
     return templates.TemplateResponse("records.html", {"request": request})
+
+@app.get("/export/csv")
+def export_csv(db: Session = Depends(get_db)):
+    """Export all glucose records as CSV"""
+    # Query all records
+    records = db.query(GlucoseRecord).all()
+    
+    # Create CSV in memory
+    output = io.StringIO()
+    writer = csv.writer(output)
+    
+    # Write header
+    writer.writerow(['id', 'timestamp', 'real_glucose', 'estimated_avg', 'difference'])
+    
+    # Write data
+    for r in records:
+        difference = abs(float(r.real_glucose) - float(r.estimated_avg))
+        writer.writerow([r.id, r.timestamp, r.real_glucose, r.estimated_avg, difference])
+    
+    # Save to a temporary file
+    with open("glucose_data.csv", "w") as f:
+        f.write(output.getvalue())
+    
+    # Return the file for download
+    return FileResponse(
+        "glucose_data.csv", 
+        media_type="text/csv", 
+        filename="glucose_training_data.csv"
+    )
+
+@app.get("/export/json")
+def export_json(db: Session = Depends(get_db)):
+    """Export all glucose records as JSON"""
+    records = db.query(GlucoseRecord).all()
+    
+    records_data = []
+    for r in records:
+        difference = abs(float(r.real_glucose) - float(r.estimated_avg))
+        records_data.append({
+            "id": r.id,
+            "timestamp": r.timestamp,
+            "real_glucose": float(r.real_glucose),
+            "estimated_avg": float(r.estimated_avg),
+            "difference": difference
+        })
+    
+    return {"records": records_data}
