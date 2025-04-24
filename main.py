@@ -151,20 +151,3 @@ def get_all_data(db: Session = Depends(get_db)):
 async def records_page(request: Request):
     return templates.TemplateResponse("records.html", {"request": request})
 
-@app.get("/export_csv")
-def export_csv():
-    db = SessionLocal()  # Assuming you're using SQLAlchemy session
-    records = db.query(GlucoseRecord).all()
-    db.close()
-
-    # Create a CSV in memory
-    output = io.StringIO()
-    writer = csv.writer(output)
-    writer.writerow(['id', 'real_glucose', 'estimated_avg', 'timestamp'])
-    for r in records:
-        writer.writerow([r.id, r.real_glucose, r.estimated_avg, r.timestamp])
-    
-    output.seek(0)  # Rewind the string buffer for reading
-    return StreamingResponse(output, media_type="text/csv", headers={
-        "Content-Disposition": "attachment; filename=glucose_data.csv"
-    })
